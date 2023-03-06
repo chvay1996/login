@@ -16,7 +16,23 @@ router.post(
   ],
   controller.registration
 );
-router.post("/login", controller.login);
-router.get("/users", roleMiddleware(["ADMIN"]), controller.getUsers);
-
+router.post("/avtorization", controller.login);
+router.get("/auth", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.user.id });
+    const token = jwt.sign({ id: user.id }, config.get("secretKey"), {
+      expiresIn: "1h",
+    });
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        login: user.login,
+      },
+    });
+  } catch (e) {
+    console.log(e);
+    res.send({ message: "Server error" });
+  }
+});
 module.exports = router;
